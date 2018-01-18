@@ -26,7 +26,7 @@ class DSL(arithmeticListener):
             self.result = self.parseTreeProperties[ctx.getChild(1)]
         else:
             var_name = ctx.expression(0).getText()
-            print(var_name)
+            # print(var_name)
             self.variables[var_name] = self.parseTreeProperties[ctx.expression(1)]
 
     def enterExpression(self, ctx: arithmeticParser.ExpressionContext):
@@ -49,7 +49,14 @@ class DSL(arithmeticListener):
         if ctx.getChildCount() == 1:
             self.parseTreeProperties[ctx] = self.parseTreeProperties[ctx.getChild(0)]
         else:
-            raise NotImplementedError()
+            total = self.parseTreeProperties[ctx.getChild(0)]
+            for i in range(0, ctx.getChildCount() - 1, 2):
+                op = ctx.getChild(i + 1).getText()
+                if op == '+':
+                    total += self.parseTreeProperties[ctx.getChild(i + 2)]
+                else:
+                    total -= self.parseTreeProperties[ctx.getChild(i + 2)]
+            self.parseTreeProperties[ctx] = total
 
     def exitTerm(self, ctx: arithmeticParser.TermContext):
         if self.isParsingAssignmentCtx:
@@ -84,7 +91,8 @@ class DSL(arithmeticListener):
         if ctx.getChildCount() == 1:
             self.parseTreeProperties[ctx] = self.parseTreeProperties[ctx.getChild(0)]
         else:
-            raise NotImplementedError()
+            assert isinstance(ctx.getChild(0), TerminalNode)
+            self.parseTreeProperties[ctx] = self.parseTreeProperties[ctx.getChild(1)]
 
     def enterVariable(self, ctx: arithmeticParser.VariableContext):
         if self.isParsingAssignmentCtx:
