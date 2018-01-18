@@ -1,10 +1,6 @@
 import unittest
-from arithmeticLexer import arithmeticLexer
-from arithmeticListener import arithmeticListener
-from arithmeticParser import arithmeticParser, ParseTreeWalker
-import antlr4
 
-from dsl_listener import evaluate_line
+from dsl_listener import evaluate_line, DSL
 
 
 class MyTestCase(unittest.TestCase):
@@ -16,6 +12,13 @@ class MyTestCase(unittest.TestCase):
         line = 'a = 2'
         dsl = evaluate_line(line)
         assert dsl.variables['a'] == 2
+
+    def test_var_ref(self):
+        line = 'a = 2 * b'
+        d = DSL()
+        d.variables['b'] = 3
+        dsl = evaluate_line(line, d)
+        assert dsl.variables['a'] == 6
 
     def test_plus(self):
         line = 'a = 1 + 1'
@@ -31,6 +34,16 @@ class MyTestCase(unittest.TestCase):
         line = 'a = 3 - 1'
         dsl = evaluate_line(line)
         assert dsl.variables['a'] == 2
+
+    def test_prod(self):
+        line = 'a = 3 * 2'
+        dsl = evaluate_line(line)
+        assert dsl.variables['a'] == 6
+
+    def test_div(self):
+        line = 'a = 6 / 2'
+        dsl = evaluate_line(line)
+        assert dsl.variables['a'] == 3
 
     def test_multiple_minus(self):
         line = 'a = 3 - 1 - 1'

@@ -8,6 +8,20 @@ from arithmeticParser import arithmeticParser, ParseTreeWalker, TerminalNode, Pa
 
 
 class DSL(arithmeticListener):
+    """
+    Listener to evaluate a simple arithmetic DSL.
+
+    The grammar requires to wait for child nodes to be evaluated before parent contexts can be completed. We
+    do this by storing evaluation results of child nodes in a dict before we ascend back to parent contexts.
+
+    In practice this means, that we do work for most high-level context evaluation in the exitXX listener methods. We
+    access child context evaluation results via a `parseTreeProperties` dict. See :meth:`enterVariable` for example
+    how to store descendant evaluation results:
+    ```
+    self.parseTreeProperties[ctx] = self.variables[ctx.getText()]
+    ```
+
+    """
 
     def __init__(self, variables: Dict[str, int] = None):
         super().__init__()
@@ -16,17 +30,20 @@ class DSL(arithmeticListener):
         self.variables = variables if variables else {}
         self.isParsingAssignmentCtx = False
 
-    # def enterEquation(self, ctx: arithmeticParser.EquationContext):
-    #     if isinstance(ctx.getChild(1), arithmeticParser.EQ):
-    #         self.isParsingAssignmentCtx = True
-
     def exitEquation(self, ctx: arithmeticParser.EquationContext):
-
+        """
+        We distinguish between assignments and return clauses.
+        :param ctx:
+        :return:
+        """
+        # if this is a return statement there is not much to do
         if isinstance(ctx.getChild(0), TerminalNode) and ctx.getChild(0).getText() == 'return':
             self.result = self.parseTreeProperties[ctx.getChild(1)]
         else:
+            # this is an assignment
+            # get the var name
             var_name = ctx.expression(0).getText()
-            # print(var_name)
+            # store the result of the right hand side expression
             self.variables[var_name] = self.parseTreeProperties[ctx.expression(1)]
 
     def enterExpression(self, ctx: arithmeticParser.ExpressionContext):
@@ -43,12 +60,20 @@ class DSL(arithmeticListener):
                 self.isParsingAssignmentCtx = True
 
     def exitExpression(self, ctx: arithmeticParser.ExpressionContext):
+        """
+        Expressions can be single values/variables or addition/subtraction of these
+
+        :param ctx:
+        :return:
+        """
         if self.isParsingAssignmentCtx:
+            # this is the LH of an assignemnt, ie. the variable name
             self.isParsingAssignmentCtx = False
             return
         if ctx.getChildCount() == 1:
             self.parseTreeProperties[ctx] = self.parseTreeProperties[ctx.getChild(0)]
         else:
+            # this is an addition/subtraction
             total = self.parseTreeProperties[ctx.getChild(0)]
             for i in range(0, ctx.getChildCount() - 1, 2):
                 op = ctx.getChild(i + 1).getText()
@@ -59,12 +84,25 @@ class DSL(arithmeticListener):
             self.parseTreeProperties[ctx] = total
 
     def exitTerm(self, ctx: arithmeticParser.TermContext):
+        """
+        Terms can be single values/variables or mult/div of these
+        :param ctx:
+        :return:
+        """
         if self.isParsingAssignmentCtx:
             return
         if ctx.getChildCount() == 1:
             self.parseTreeProperties[ctx] = self.parseTreeProperties[ctx.getChild(0)]
         else:
-            raise NotImplementedError()
+            # this is an addition/subtraction
+            total = self.parseTreeProperties[ctx.getChild(0)]
+            for i in range(0, ctx.getChildCount() - 1, 2):
+                op = ctx.getChild(i + 1).getText()
+                if op == '*':
+                    total *= self.parseTreeProperties[ctx.getChild(i + 2)]
+                else:
+                    total /= self.parseTreeProperties[ctx.getChild(i + 2)]
+            self.parseTreeProperties[ctx] = total
 
     def exitFactor(self, ctx: arithmeticParser.FactorContext):
         if self.isParsingAssignmentCtx:
@@ -114,12 +152,12 @@ def main():
         evaluate_line(line)
 
 
-def evaluate_line(line):
+def evaluate_line(line, dsl=DSL()):
     lexer = arithmeticLexer(antlr4.InputStream(line))
     stream = antlr4.CommonTokenStream(lexer)
     parser = arithmeticParser(stream)
     tree = parser.equation()
-    dsl_eval = DSL()
+    dsl_eval = dsl
     walker = ParseTreeWalker()
     walker.walk(dsl_eval, tree)
     return dsl_eval
