@@ -5,3 +5,6 @@ arithmeticLexer.py
 arithmeticLexer.tokens
 arithmeticListener.py
 arithmeticParser.py
+
+
+.idea/*

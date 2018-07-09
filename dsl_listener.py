@@ -163,5 +163,15 @@ def evaluate_line(line, dsl=DSL()):
     return dsl_eval
 
 
+def evaluate_lines(lines: [str]):
+    dsl = None
+    for line in iter(lines.strip().splitlines()):
+        if dsl:
+            dsl = evaluate_line(line, dsl)
+        else:
+            dsl = evaluate_line(line)
+    return dsl
+
+
 if __name__ == '__main__':
     main()

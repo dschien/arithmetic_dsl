@@ -1,6 +1,7 @@
+import pandas as pd
 import unittest
 
-from dsl_listener import evaluate_line, DSL
+from dsl_listener import evaluate_line, DSL, evaluate_lines
 
 
 class MyTestCase(unittest.TestCase):
@@ -64,7 +65,32 @@ class MyTestCase(unittest.TestCase):
         line = """a = 2
         return a
         """
-        dsl = evaluate_line(line)
+        dsl = evaluate_lines(line)
+        assert dsl.result == 2
+
+    def test_multi_line_variables(self):
+        line = """a = 2
+        a = a * 2
+        return a
+        """
+        dsl = evaluate_lines(line)
+        assert dsl.result == 4
+
+    def test_pandas(self):
+        d = {'col1': [1, 2], 'col2': [3, 4]}
+        df = pd.DataFrame(data=d)
+
+        line = 'a = 2 * b'
+        d = DSL()
+        d.variables['b'] = df
+        dsl = evaluate_line(line, d)
+
+        from pandas.util.testing import assert_frame_equal
+
+        d = {'col1': [2, 4], 'col2': [6, 8]}
+        df_new = pd.DataFrame(data=d)
+
+        assert_frame_equal(dsl.variables['a'], df_new)
 
 
 if __name__ == '__main__':
