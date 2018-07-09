@@ -1,7 +1,7 @@
 import pandas as pd
 import unittest
 
-from dsl_listener import evaluate_line, DSL, evaluate_lines
+from dsl.dsl_listener import evaluate_line, DSL, evaluate_lines
 
 
 class MyTestCase(unittest.TestCase):

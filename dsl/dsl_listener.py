@@ -2,9 +2,9 @@ from typing import Dict
 
 import antlr4
 
-from arithmeticLexer import arithmeticLexer
-from arithmeticListener import arithmeticListener
-from arithmeticParser import arithmeticParser, ParseTreeWalker, TerminalNode, ParserRuleContext
+from dsl.arithmeticLexer import arithmeticLexer
+from dsl.arithmeticListener import arithmeticListener
+from dsl.arithmeticParser import arithmeticParser, ParseTreeWalker, TerminalNode, ParserRuleContext
 
 
 class DSL(arithmeticListener):
