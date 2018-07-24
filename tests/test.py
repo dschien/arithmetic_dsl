@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 import pandas as pd
 import unittest
 
@@ -65,6 +67,19 @@ class MyTestCase(unittest.TestCase):
         line = """a = 2
         return a
         """
+        dsl = evaluate_lines(line)
+        assert dsl.result == 2
+
+    def test_multi_line_long_formula(self):
+        line = """
+              average_bitrate = (share_videos * video_bitrate + share_audio_streams * audio_bitrate)
+            data_volume = video_minutes_monthly * 60 * 1e6 * average_bitrate * traffic_flow_coefficient
+            energy = energy_intensity * data_volume
+      
+        return energy
+        """
+        d = DSL(variables=defaultdict(lambda: 1))
+        # d.variables['share_videos'] = 1
         dsl = evaluate_lines(line)
         assert dsl.result == 2
 
